@@ -1,0 +1,21 @@
+version: "3.8"
+services:
+  postgres:
+    container_name:  blog-db
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin@123
+      POSTGRES_DB: blogdb
+    ports:
+      - "5432:5432"
+  pgadmin:
+    container_name: pgadmin_blogdb
+    image: dpage/pgadmin4
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: root@just.edu.so
+      PGADMIN_DEFAULT_PASSWORD: root
+    ports:
+      - "5055:80"
