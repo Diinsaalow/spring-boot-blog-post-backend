@@ -4,11 +4,17 @@ import com.capstone.springbootblogpostbackend.posts.Post;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import org.springframework.data.annotation.Id;
+import lombok.*;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@Entity
+@Table(name = "users")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
