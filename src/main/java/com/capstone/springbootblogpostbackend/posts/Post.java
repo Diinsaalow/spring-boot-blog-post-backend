@@ -2,6 +2,7 @@ package com.capstone.springbootblogpostbackend.posts;
 
 import com.capstone.springbootblogpostbackend.comments.Comment;
 import com.capstone.springbootblogpostbackend.users.User;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
@@ -35,6 +36,7 @@ public class Post {
 
     @ManyToOne
     @JoinColumn(name = "author_id", nullable = false)
+    @JsonBackReference
     private User author;
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)

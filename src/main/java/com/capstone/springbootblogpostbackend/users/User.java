@@ -1,6 +1,7 @@
 package com.capstone.springbootblogpostbackend.users;
 
 import com.capstone.springbootblogpostbackend.posts.Post;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -35,11 +36,8 @@ public class User {
 
     private String profileImageUrl;
 
+    @Builder.Default
     @OneToMany(mappedBy = "author")
+    @JsonManagedReference
     private List<Post> posts = new ArrayList<>();
-}
-
-enum Role {
-    USER,
-    ADMIN
 }
