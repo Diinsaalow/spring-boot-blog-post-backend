@@ -2,12 +2,15 @@ package com.capstone.springbootblogpostbackend.posts;
 
 import com.capstone.springbootblogpostbackend.users.User;
 import com.capstone.springbootblogpostbackend.users.UserRepository;
+import com.capstone.springbootblogpostbackend.users.UserDTO;
+import com.capstone.springbootblogpostbackend.comments.CommentDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -15,8 +18,41 @@ public class PostService {
     private final PostRepository postRepository;
     private final UserRepository userRepository;
 
-    public List<Post> getAllPosts() {
-        return postRepository.findAll();
+    public List<PostDTO> getAllPosts() {
+        return postRepository.findAll().stream()
+                .map(this::mapToDTO)
+                .collect(Collectors.toList());
+    }
+
+    private PostDTO mapToDTO(Post post) {
+        UserDTO authorDTO = UserDTO.builder()
+                .id(post.getAuthor().getId())
+                .username(post.getAuthor().getUsername())
+                .email(post.getAuthor().getEmail())
+                .role(post.getAuthor().getRole().name()) // Convert Role enum to String
+                .build();
+
+        List<CommentDTO> commentDTOs = post.getComments() == null ? List.of()
+                : post.getComments().stream()
+                        .map(comment -> CommentDTO.builder()
+                                .id(comment.getId())
+                                .content(comment.getContent())
+                                .postId(post.getId())
+                                .createdAt(comment.getCreatedAt())
+                                .updatedAt(comment.getUpdatedAt())
+                                .build())
+                        .collect(Collectors.toList());
+
+        return PostDTO.builder()
+                .id(post.getId())
+                .title(post.getTitle())
+                .content(post.getContent())
+                .thumbnailUrl(post.getThumbnailUrl())
+                .author(authorDTO)
+                .comments(commentDTOs)
+                .createdAt(post.getCreatedAt())
+                .updatedAt(post.getUpdatedAt())
+                .build();
     }
 
     public Optional<Post> getPostById(Long id) {
