@@ -9,56 +9,141 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 
 import java.util.HashMap;
 import java.util.Map;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.List;
+import jakarta.servlet.http.HttpServletRequest;
+import com.capstone.springbootblogpostbackend.exception.ApiErrorResponse;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.ZoneOffset;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    // Utility to extract required fields from a DTO class
+    private static List<String> getRequiredFields(Class<?> dtoClass) {
+        List<String> requiredFields = new ArrayList<>();
+        for (Field field : dtoClass.getDeclaredFields()) {
+            if (field.isAnnotationPresent(NotBlank.class) || field.isAnnotationPresent(NotNull.class)) {
+                requiredFields.add(field.getName());
+            }
+        }
+        return requiredFields;
+    }
+
+    // Map endpoint paths to DTO classes
+    private static final Map<String, Class<?>> endpointDtoMap = new HashMap<>() {
+        {
+            put("/api/v1/auth/login", com.capstone.springbootblogpostbackend.auth.AuthRequest.class);
+            put("/api/v1/auth/register", com.capstone.springbootblogpostbackend.auth.RegisterRequest.class);
+            put("/api/v1/posts", com.capstone.springbootblogpostbackend.posts.PostDTO.class);
+            put("/api/v1/comments/post/{postId}", com.capstone.springbootblogpostbackend.comments.CommentDTO.class);
+        }
+    };
+
+    private ApiErrorResponse buildErrorResponse(int statusCode, String message, String error, String path) {
+        return new ApiErrorResponse(
+                statusCode,
+                message,
+                error,
+                path,
+                ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, String>> handleValidationExceptions(MethodArgumentNotValidException ex) {
-        Map<String, String> errors = new HashMap<>();
-        ex.getBindingResult().getAllErrors().forEach((error) -> {
-            String fieldName = ((FieldError) error).getField();
-            String errorMessage = error.getDefaultMessage();
-            errors.put(fieldName, errorMessage);
+    public ResponseEntity<ApiErrorResponse> handleValidationExceptions(MethodArgumentNotValidException ex,
+            HttpServletRequest request) {
+        StringBuilder missingFields = new StringBuilder();
+        ex.getBindingResult().getAllErrors().forEach((err) -> {
+            String fieldName = ((FieldError) err).getField();
+            if (missingFields.length() > 0)
+                missingFields.append(", ");
+            missingFields.append(fieldName);
         });
-        return ResponseEntity.badRequest().body(errors);
+        String message;
+        if (missingFields.length() > 0) {
+            message = missingFields + " are required";
+        } else {
+            if (!ex.getBindingResult().getTarget().getClass().getSimpleName().equals("Object")) {
+                List<String> requiredFields = getRequiredFields(ex.getBindingResult().getTarget().getClass());
+                if (!requiredFields.isEmpty()) {
+                    message = "All fields are required: " + String.join(", ", requiredFields);
+                } else {
+                    message = "All fields are required";
+                }
+            } else {
+                message = "All fields are required";
+            }
+        }
+        return ResponseEntity.badRequest().body(
+                buildErrorResponse(400, message, "Bad Request", request.getRequestURI()));
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiErrorResponse> handleHttpMessageNotReadableException(HttpMessageNotReadableException ex,
+            HttpServletRequest request) {
+        String path = request.getRequestURI();
+        Class<?> dtoClass = endpointDtoMap.get(path);
+        String message;
+        if (dtoClass != null) {
+            List<String> requiredFields = getRequiredFields(dtoClass);
+            if (!requiredFields.isEmpty()) {
+                message = "All fields are required: " + String.join(", ", requiredFields);
+            } else {
+                message = "All fields are required";
+            }
+        } else {
+            message = "All fields are required";
+        }
+        return ResponseEntity.badRequest().body(
+                buildErrorResponse(400, message, "Bad Request", path));
     }
 
     @ExceptionHandler(UsernameNotFoundException.class)
-    public ResponseEntity<Map<String, String>> handleUsernameNotFoundException(UsernameNotFoundException ex) {
-        Map<String, String> error = new HashMap<>();
-        error.put("error", ex.getMessage());
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+    public ResponseEntity<ApiErrorResponse> handleUsernameNotFoundException(UsernameNotFoundException ex,
+            HttpServletRequest request) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                buildErrorResponse(404, ex.getMessage(), "Not Found", request.getRequestURI()));
     }
 
     @ExceptionHandler(BadCredentialsException.class)
-    public ResponseEntity<Map<String, String>> handleBadCredentialsException(BadCredentialsException ex) {
-        Map<String, String> error = new HashMap<>();
-        error.put("error", "Invalid username or password");
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
+    public ResponseEntity<ApiErrorResponse> handleBadCredentialsException(BadCredentialsException ex,
+            HttpServletRequest request) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
+                buildErrorResponse(401, "Invalid username or password", "Unauthorized", request.getRequestURI()));
     }
 
     @ExceptionHandler(AccessDeniedException.class)
-    public ResponseEntity<Map<String, String>> handleAccessDeniedException(AccessDeniedException ex) {
-        Map<String, String> error = new HashMap<>();
-        error.put("error", "Access denied");
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
+    public ResponseEntity<ApiErrorResponse> handleAccessDeniedException(AccessDeniedException ex,
+            HttpServletRequest request) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
+                buildErrorResponse(403, "Access denied", "Forbidden", request.getRequestURI()));
+    }
+
+    @ExceptionHandler(org.springframework.security.core.AuthenticationException.class)
+    public ResponseEntity<ApiErrorResponse> handleAuthenticationException(
+            org.springframework.security.core.AuthenticationException ex, HttpServletRequest request) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
+                buildErrorResponse(401, "Authentication required", "Unauthorized", request.getRequestURI()));
     }
 
     @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<Map<String, String>> handleRuntimeException(RuntimeException ex) {
-        Map<String, String> error = new HashMap<>();
-        error.put("error", ex.getMessage());
-        return ResponseEntity.badRequest().body(error);
+    public ResponseEntity<ApiErrorResponse> handleRuntimeException(RuntimeException ex, HttpServletRequest request) {
+        return ResponseEntity.badRequest().body(
+                buildErrorResponse(400, ex.getMessage(), "Bad Request", request.getRequestURI()));
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<Map<String, String>> handleGenericException(Exception ex) {
-        Map<String, String> error = new HashMap<>();
-        error.put("error", "An unexpected error occurred");
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+    public ResponseEntity<ApiErrorResponse> handleGenericException(Exception ex, HttpServletRequest request) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                buildErrorResponse(500, "An unexpected error occurred", "Internal Server Error",
+                        request.getRequestURI()));
     }
 }
