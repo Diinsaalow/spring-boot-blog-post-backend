@@ -2,6 +2,7 @@ package com.capstone.springbootblogpostbackend.comments;
 
 import com.capstone.springbootblogpostbackend.posts.Post;
 import com.capstone.springbootblogpostbackend.users.User;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
@@ -24,12 +25,13 @@ public class Comment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank
+    @NotBlank(message = "Content cannot be blank")
     @Column(columnDefinition = "TEXT")
     private String content;
 
     @ManyToOne
     @JoinColumn(name = "post_id", nullable = false)
+    @JsonBackReference
     private Post post;
 
     @ManyToOne

@@ -16,31 +16,32 @@ public class CommentController {
     private final CommentService commentService;
 
     @GetMapping("/post/{postId}")
-    public ResponseEntity<List<Comment>> getCommentsByPostId(@PathVariable Long postId) {
+    public ResponseEntity<List<CommentDTO>> getCommentsByPostId(@PathVariable Long postId) {
         return ResponseEntity.ok(commentService.getCommentsByPostId(postId));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Comment> getCommentById(@PathVariable Long id) {
+    public ResponseEntity<CommentDTO> getCommentById(@PathVariable Long id) {
         return commentService.getCommentById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping("/post/{postId}")
-    public ResponseEntity<Comment> createComment(@PathVariable Long postId, @Valid @RequestBody CommentDTO commentDTO,
+    public ResponseEntity<CommentDTO> createComment(@PathVariable Long postId,
+            @Valid @RequestBody CommentDTO commentDTO,
             Authentication authentication) {
         String username = authentication.getName();
-        Comment createdComment = commentService.createComment(commentDTO, postId, username);
+        CommentDTO createdComment = commentService.createComment(commentDTO, postId, username);
         return ResponseEntity.ok(createdComment);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Comment> updateComment(@PathVariable Long id, @Valid @RequestBody CommentDTO commentDTO,
+    public ResponseEntity<CommentDTO> updateComment(@PathVariable Long id, @Valid @RequestBody CommentDTO commentDTO,
             Authentication authentication) {
         try {
             String username = authentication.getName();
-            Comment updatedComment = commentService.updateComment(id, commentDTO, username);
+            CommentDTO updatedComment = commentService.updateComment(id, commentDTO, username);
             return ResponseEntity.ok(updatedComment);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().build();
@@ -59,7 +60,7 @@ public class CommentController {
     }
 
     @GetMapping("/author/{authorId}")
-    public ResponseEntity<List<Comment>> getCommentsByAuthor(@PathVariable Long authorId) {
+    public ResponseEntity<List<CommentDTO>> getCommentsByAuthor(@PathVariable Long authorId) {
         return ResponseEntity.ok(commentService.getCommentsByAuthor(authorId));
     }
 }

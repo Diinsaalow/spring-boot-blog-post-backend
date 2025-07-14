@@ -9,6 +9,9 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 
 @Data
 @NoArgsConstructor
@@ -16,7 +19,10 @@ import java.util.List;
 @Builder
 public class PostDTO {
     private Long id;
+    @NotBlank(message = "Title cannot be blank")
     private String title;
+    @NotBlank(message = "Content cannot be blank")
+    @NotNull(message = "Content cannot be null")
     private String content;
     private String thumbnailUrl;
     private UserDTO author;

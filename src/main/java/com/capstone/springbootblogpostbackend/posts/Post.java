@@ -3,6 +3,7 @@ package com.capstone.springbootblogpostbackend.posts;
 import com.capstone.springbootblogpostbackend.comments.Comment;
 import com.capstone.springbootblogpostbackend.users.User;
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
@@ -40,6 +41,7 @@ public class Post {
     private User author;
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
     private List<Comment> comments = new ArrayList<>();
 
     @CreationTimestamp
