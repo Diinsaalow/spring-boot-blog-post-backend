@@ -1,16 +1,19 @@
 package com.capstone.springbootblogpostbackend.comments;
 
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.stereotype.Service;
+
+import com.capstone.springbootblogpostbackend.exception.BlogException;
 import com.capstone.springbootblogpostbackend.posts.Post;
 import com.capstone.springbootblogpostbackend.posts.PostRepository;
 import com.capstone.springbootblogpostbackend.users.User;
 import com.capstone.springbootblogpostbackend.users.UserRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -29,11 +32,11 @@ public class CommentService {
                 return commentRepository.findById(id).map(this::mapToDTO);
         }
 
-        public CommentDTO createComment(CommentDTO commentDTO, Long postId, String username) {
+        public CommentDTO createComment(CommentDTO commentDTO, Long postId, String email) {
                 Post post = postRepository.findById(postId)
-                                .orElseThrow(() -> new RuntimeException("Post not found"));
+                                .orElseThrow(() -> BlogException.notFound("Post", postId));
 
-                User author = userRepository.findByUsername(username)
+                User author = userRepository.findByEmail(email)
                                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
                 Comment comment = Comment.builder()
@@ -46,17 +49,17 @@ public class CommentService {
                 return mapToDTO(saved);
         }
 
-        public CommentDTO updateComment(Long id, CommentDTO commentDTO, String username) {
+        public CommentDTO updateComment(Long id, CommentDTO commentDTO, String email) {
                 Comment comment = commentRepository.findById(id)
-                                .orElseThrow(() -> new RuntimeException("Comment not found"));
+                                .orElseThrow(() -> BlogException.notFound("Comment", id));
 
-                User author = userRepository.findByUsername(username)
+                User author = userRepository.findByEmail(email)
                                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
                 // Check if the user is the author or an admin
                 if (!comment.getAuthor().getId().equals(author.getId()) &&
                                 !author.getRole().name().equals("ADMIN")) {
-                        throw new RuntimeException("You can only update your own comments");
+                        throw BlogException.forbidden("You can only update your own comments");
                 }
 
                 comment.setContent(commentDTO.getContent());
@@ -65,17 +68,17 @@ public class CommentService {
                 return mapToDTO(saved);
         }
 
-        public void deleteComment(Long id, String username) {
+        public void deleteComment(Long id, String email) {
                 Comment comment = commentRepository.findById(id)
-                                .orElseThrow(() -> new RuntimeException("Comment not found"));
+                                .orElseThrow(() -> BlogException.notFound("Comment", id));
 
-                User author = userRepository.findByUsername(username)
+                User author = userRepository.findByEmail(email)
                                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
                 // Check if the user is the author or an admin
                 if (!comment.getAuthor().getId().equals(author.getId()) &&
                                 !author.getRole().name().equals("ADMIN")) {
-                        throw new RuntimeException("You can only delete your own comments");
+                        throw BlogException.forbidden("You can only delete your own comments");
                 }
 
                 commentRepository.delete(comment);

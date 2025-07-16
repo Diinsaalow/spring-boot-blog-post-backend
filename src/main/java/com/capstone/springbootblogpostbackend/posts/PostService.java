@@ -1,16 +1,19 @@
 package com.capstone.springbootblogpostbackend.posts;
 
-import com.capstone.springbootblogpostbackend.users.User;
-import com.capstone.springbootblogpostbackend.users.UserRepository;
-import com.capstone.springbootblogpostbackend.users.UserDTO;
-import com.capstone.springbootblogpostbackend.comments.CommentDTO;
-import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.stereotype.Service;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.stereotype.Service;
+
+import com.capstone.springbootblogpostbackend.comments.CommentDTO;
+import com.capstone.springbootblogpostbackend.exception.BlogException;
+import com.capstone.springbootblogpostbackend.users.User;
+import com.capstone.springbootblogpostbackend.users.UserDTO;
+import com.capstone.springbootblogpostbackend.users.UserRepository;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -77,7 +80,7 @@ public class PostService {
 
         public Post updatePost(Long id, PostDTO postDTO, String email) {
                 Post post = postRepository.findById(id)
-                                .orElseThrow(() -> new RuntimeException("Post not found"));
+                                .orElseThrow(() -> BlogException.notFound("Post", id));
 
                 User author = userRepository.findByEmail(email)
                                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
@@ -85,7 +88,7 @@ public class PostService {
                 // Check if the user is the author or an admin
                 if (!post.getAuthor().getId().equals(author.getId()) &&
                                 !author.getRole().name().equals("ADMIN")) {
-                        throw new RuntimeException("You can only update your own posts");
+                        throw BlogException.forbidden("You can only update your own posts");
                 }
 
                 post.setTitle(postDTO.getTitle());
@@ -97,16 +100,20 @@ public class PostService {
         }
 
         public void deletePost(Long id, String email) {
+                System.out.println("Deleting post with id: " + id);
                 Post post = postRepository.findById(id)
-                                .orElseThrow(() -> new RuntimeException("Post not found"));
+                                .orElseThrow(() -> BlogException.notFound("Post", id));
 
                 User author = userRepository.findByEmail(email)
                                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
+                // Author id and post author id are the same
+                System.out.println("Author id: " + author.getId());
+                System.out.println("Post author id: " + post.getAuthor().getId());
                 // Check if the user is the author or an admin
                 if (!post.getAuthor().getId().equals(author.getId()) &&
                                 !author.getRole().name().equals("ADMIN")) {
-                        throw new RuntimeException("You can only delete your own posts");
+                        throw BlogException.forbidden("You can only delete your own posts");
                 }
 
                 postRepository.delete(post);

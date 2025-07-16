@@ -1,12 +1,23 @@
 package com.capstone.springbootblogpostbackend.comments;
 
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
+import java.util.List;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
+import com.capstone.springbootblogpostbackend.exception.BlogException;
+
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/v1/comments")
@@ -22,41 +33,33 @@ public class CommentController {
 
     @GetMapping("/{id}")
     public ResponseEntity<CommentDTO> getCommentById(@PathVariable Long id) {
-        return commentService.getCommentById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        CommentDTO comment = commentService.getCommentById(id)
+                .orElseThrow(() -> BlogException.notFound("Comment", id));
+        return ResponseEntity.ok(comment);
     }
 
     @PostMapping("/post/{postId}")
     public ResponseEntity<CommentDTO> createComment(@PathVariable Long postId,
             @Valid @RequestBody CommentDTO commentDTO,
             Authentication authentication) {
-        String username = authentication.getName();
-        CommentDTO createdComment = commentService.createComment(commentDTO, postId, username);
+        String email = authentication.getName();
+        CommentDTO createdComment = commentService.createComment(commentDTO, postId, email);
         return ResponseEntity.ok(createdComment);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<CommentDTO> updateComment(@PathVariable Long id, @Valid @RequestBody CommentDTO commentDTO,
             Authentication authentication) {
-        try {
-            String username = authentication.getName();
-            CommentDTO updatedComment = commentService.updateComment(id, commentDTO, username);
-            return ResponseEntity.ok(updatedComment);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().build();
-        }
+        String email = authentication.getName();
+        CommentDTO updatedComment = commentService.updateComment(id, commentDTO, email);
+        return ResponseEntity.ok(updatedComment);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteComment(@PathVariable Long id, Authentication authentication) {
-        try {
-            String username = authentication.getName();
-            commentService.deleteComment(id, username);
-            return ResponseEntity.ok().build();
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().build();
-        }
+        String email = authentication.getName();
+        commentService.deleteComment(id, email);
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("/author/{authorId}")

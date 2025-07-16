@@ -1,12 +1,14 @@
 package com.capstone.springbootblogpostbackend.config;
 
-import com.capstone.springbootblogpostbackend.users.Role;
-import com.capstone.springbootblogpostbackend.users.User;
-import com.capstone.springbootblogpostbackend.users.UserRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+
+import com.capstone.springbootblogpostbackend.users.Role;
+import com.capstone.springbootblogpostbackend.users.User;
+import com.capstone.springbootblogpostbackend.users.UserRepository;
+
+import lombok.RequiredArgsConstructor;
 
 @Component
 @RequiredArgsConstructor
@@ -18,9 +20,9 @@ public class DataInitializer implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
         // Create admin user if it doesn't exist
-        if (!userRepository.existsByUsername("admin")) {
+        if (!userRepository.existsByEmail("admin@example.com")) {
             User adminUser = User.builder()
-                    .username("admin")
+                    .fullName("Admin User")
                     .email("admin@example.com")
                     .password(passwordEncoder.encode("admin123"))
                     .role(Role.ADMIN)
@@ -30,9 +32,9 @@ public class DataInitializer implements CommandLineRunner {
         }
 
         // Create a regular user if it doesn't exist
-        if (!userRepository.existsByUsername("user")) {
+        if (!userRepository.existsByEmail("user@example.com")) {
             User regularUser = User.builder()
-                    .username("user")
+                    .fullName("Regular User")
                     .email("user@example.com")
                     .password(passwordEncoder.encode("user123"))
                     .role(Role.USER)

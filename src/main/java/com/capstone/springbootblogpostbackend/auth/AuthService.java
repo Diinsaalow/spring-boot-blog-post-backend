@@ -1,13 +1,15 @@
 package com.capstone.springbootblogpostbackend.auth;
 
-import com.capstone.springbootblogpostbackend.users.Role;
-import com.capstone.springbootblogpostbackend.users.User;
-import com.capstone.springbootblogpostbackend.users.UserRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import com.capstone.springbootblogpostbackend.users.Role;
+import com.capstone.springbootblogpostbackend.users.User;
+import com.capstone.springbootblogpostbackend.users.UserRepository;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -40,7 +42,7 @@ public class AuthService {
                 var jwtToken = jwtService.generateToken(userDetails);
                 return AuthResponse.builder()
                                 .token(jwtToken)
-                                .username(user.getFullName())
+                                .fullName(user.getFullName())
                                 .role(user.getRole().name())
                                 .message("User registered successfully")
                                 .build();
@@ -61,7 +63,7 @@ public class AuthService {
                 var jwtToken = jwtService.generateToken(userDetails);
                 return AuthResponse.builder()
                                 .token(jwtToken)
-                                .username(user.getFullName())
+                                .fullName(user.getFullName())
                                 .role(user.getRole().name())
                                 .message("Authentication successful")
                                 .build();
