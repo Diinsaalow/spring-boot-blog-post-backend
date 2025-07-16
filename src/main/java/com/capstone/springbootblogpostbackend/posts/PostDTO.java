@@ -25,6 +25,8 @@ public class PostDTO {
     @NotNull(message = "Content cannot be null")
     private String content;
     private String thumbnailUrl;
+    @Builder.Default
+    private Boolean isFeatured = false;
     private UserDTO author;
     private List<CommentDTO> comments;
     private LocalDateTime createdAt;

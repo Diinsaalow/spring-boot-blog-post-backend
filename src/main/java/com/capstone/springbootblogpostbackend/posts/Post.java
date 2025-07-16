@@ -7,6 +7,8 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
+import lombok.Builder.Default;
+
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -34,6 +36,9 @@ public class Post {
     private String content;
 
     private String thumbnailUrl;
+
+    @Builder.Default
+    private Boolean isFeatured = false;
 
     @ManyToOne
     @JoinColumn(name = "author_id", nullable = false)

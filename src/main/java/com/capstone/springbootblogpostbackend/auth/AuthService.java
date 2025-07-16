@@ -12,64 +12,58 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class AuthService {
-    private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
-    private final JwtService jwtService;
-    private final AuthenticationManager authenticationManager;
+        private final UserRepository userRepository;
+        private final PasswordEncoder passwordEncoder;
+        private final JwtService jwtService;
+        private final AuthenticationManager authenticationManager;
 
-    public AuthResponse register(RegisterRequest request) {
-        if (userRepository.existsByUsername(request.getUsername())) {
-            return AuthResponse.builder()
-                    .message("Username already exists")
-                    .build();
+        public AuthResponse register(RegisterRequest request) {
+                if (userRepository.existsByEmail(request.getEmail())) {
+                        return AuthResponse.builder()
+                                        .message("Email already exists")
+                                        .build();
+                }
+
+                var user = User.builder()
+                                .fullName(request.getFullName())
+                                .email(request.getEmail())
+                                .password(passwordEncoder.encode(request.getPassword()))
+                                .role(Role.USER)
+                                .profileImageUrl(request.getProfileImageUrl())
+                                .build();
+                userRepository.save(user);
+                var userDetails = org.springframework.security.core.userdetails.User.builder()
+                                .username(user.getEmail())
+                                .password(user.getPassword())
+                                .authorities("ROLE_" + user.getRole().name())
+                                .build();
+                var jwtToken = jwtService.generateToken(userDetails);
+                return AuthResponse.builder()
+                                .token(jwtToken)
+                                .username(user.getFullName())
+                                .role(user.getRole().name())
+                                .message("User registered successfully")
+                                .build();
         }
 
-        if (userRepository.existsByEmail(request.getEmail())) {
-            return AuthResponse.builder()
-                    .message("Email already exists")
-                    .build();
+        public AuthResponse authenticate(AuthRequest request) {
+                authenticationManager.authenticate(
+                                new UsernamePasswordAuthenticationToken(
+                                                request.getEmail(),
+                                                request.getPassword()));
+                var user = userRepository.findByEmail(request.getEmail())
+                                .orElseThrow();
+                var userDetails = org.springframework.security.core.userdetails.User.builder()
+                                .username(user.getEmail())
+                                .password(user.getPassword())
+                                .authorities("ROLE_" + user.getRole().name())
+                                .build();
+                var jwtToken = jwtService.generateToken(userDetails);
+                return AuthResponse.builder()
+                                .token(jwtToken)
+                                .username(user.getFullName())
+                                .role(user.getRole().name())
+                                .message("Authentication successful")
+                                .build();
         }
-
-        var user = User.builder()
-                .username(request.getUsername())
-                .email(request.getEmail())
-                .password(passwordEncoder.encode(request.getPassword()))
-                .role(Role.USER)
-                .profileImageUrl(request.getProfileImageUrl())
-                .build();
-        userRepository.save(user);
-        var userDetails = org.springframework.security.core.userdetails.User.builder()
-                .username(user.getUsername())
-                .password(user.getPassword())
-                .authorities("ROLE_" + user.getRole().name())
-                .build();
-        var jwtToken = jwtService.generateToken(userDetails);
-        return AuthResponse.builder()
-                .token(jwtToken)
-                .username(user.getUsername())
-                .role(user.getRole().name())
-                .message("User registered successfully")
-                .build();
-    }
-
-    public AuthResponse authenticate(AuthRequest request) {
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        request.getUsername(),
-                        request.getPassword()));
-        var user = userRepository.findByUsername(request.getUsername())
-                .orElseThrow();
-        var userDetails = org.springframework.security.core.userdetails.User.builder()
-                .username(user.getUsername())
-                .password(user.getPassword())
-                .authorities("ROLE_" + user.getRole().name())
-                .build();
-        var jwtToken = jwtService.generateToken(userDetails);
-        return AuthResponse.builder()
-                .token(jwtToken)
-                .username(user.getUsername())
-                .role(user.getRole().name())
-                .message("Authentication successful")
-                .build();
-    }
 }

@@ -21,26 +21,26 @@ public class PostController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Post> getPostById(@PathVariable Long id) {
+    public ResponseEntity<PostDTO> getPostById(@PathVariable Long id) {
         return postService.getPostById(id)
-                .map(ResponseEntity::ok)
+                .map(post -> ResponseEntity.ok(postService.mapToDTO(post)))
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
-    public ResponseEntity<Post> createPost(@Valid @RequestBody PostDTO postDTO, Authentication authentication) {
-        String username = authentication.getName();
-        Post createdPost = postService.createPost(postDTO, username);
-        return ResponseEntity.ok(createdPost);
+    public ResponseEntity<PostDTO> createPost(@Valid @RequestBody PostDTO postDTO, Authentication authentication) {
+        String email = authentication.getName();
+        Post createdPost = postService.createPost(postDTO, email);
+        return ResponseEntity.ok(postService.mapToDTO(createdPost));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Post> updatePost(@PathVariable Long id, @Valid @RequestBody PostDTO postDTO,
+    public ResponseEntity<PostDTO> updatePost(@PathVariable Long id, @Valid @RequestBody PostDTO postDTO,
             Authentication authentication) {
         try {
-            String username = authentication.getName();
-            Post updatedPost = postService.updatePost(id, postDTO, username);
-            return ResponseEntity.ok(updatedPost);
+            String email = authentication.getName();
+            Post updatedPost = postService.updatePost(id, postDTO, email);
+            return ResponseEntity.ok(postService.mapToDTO(updatedPost));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().build();
         }
@@ -49,8 +49,8 @@ public class PostController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletePost(@PathVariable Long id, Authentication authentication) {
         try {
-            String username = authentication.getName();
-            postService.deletePost(id, username);
+            String email = authentication.getName();
+            postService.deletePost(id, email);
             return ResponseEntity.ok().build();
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().build();
@@ -58,12 +58,16 @@ public class PostController {
     }
 
     @GetMapping("/author/{authorId}")
-    public ResponseEntity<List<Post>> getPostsByAuthor(@PathVariable Long authorId) {
-        return ResponseEntity.ok(postService.getPostsByAuthor(authorId));
+    public ResponseEntity<List<PostDTO>> getPostsByAuthor(@PathVariable Long authorId) {
+        List<Post> posts = postService.getPostsByAuthor(authorId);
+        List<PostDTO> postDTOs = posts.stream().map(postService::mapToDTO).toList();
+        return ResponseEntity.ok(postDTOs);
     }
 
     @GetMapping("/search")
-    public ResponseEntity<List<Post>> searchPosts(@RequestParam String title) {
-        return ResponseEntity.ok(postService.searchPostsByTitle(title));
+    public ResponseEntity<List<PostDTO>> searchPosts(@RequestParam String title) {
+        List<Post> posts = postService.searchPostsByTitle(title);
+        List<PostDTO> postDTOs = posts.stream().map(postService::mapToDTO).toList();
+        return ResponseEntity.ok(postDTOs);
     }
 }

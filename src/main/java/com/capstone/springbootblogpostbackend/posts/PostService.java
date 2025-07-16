@@ -24,10 +24,10 @@ public class PostService {
                                 .collect(Collectors.toList());
         }
 
-        private PostDTO mapToDTO(Post post) {
+        public PostDTO mapToDTO(Post post) {
                 UserDTO authorDTO = UserDTO.builder()
                                 .id(post.getAuthor().getId())
-                                .username(post.getAuthor().getUsername())
+                                .fullName(post.getAuthor().getFullName())
                                 .email(post.getAuthor().getEmail())
                                 .role(post.getAuthor().getRole().name()) // Convert Role enum to String
                                 .build();
@@ -48,6 +48,7 @@ public class PostService {
                                 .title(post.getTitle())
                                 .content(post.getContent())
                                 .thumbnailUrl(post.getThumbnailUrl())
+                                .isFeatured(post.getIsFeatured())
                                 .author(authorDTO)
                                 .comments(commentDTOs)
                                 .createdAt(post.getCreatedAt())
@@ -59,25 +60,26 @@ public class PostService {
                 return postRepository.findById(id);
         }
 
-        public Post createPost(PostDTO postDTO, String username) {
-                User author = userRepository.findByUsername(username)
+        public Post createPost(PostDTO postDTO, String email) {
+                User author = userRepository.findByEmail(email)
                                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
                 Post post = Post.builder()
                                 .title(postDTO.getTitle())
                                 .content(postDTO.getContent())
                                 .thumbnailUrl(postDTO.getThumbnailUrl())
+                                .isFeatured(postDTO.getIsFeatured() != null ? postDTO.getIsFeatured() : false)
                                 .author(author)
                                 .build();
 
                 return postRepository.save(post);
         }
 
-        public Post updatePost(Long id, PostDTO postDTO, String username) {
+        public Post updatePost(Long id, PostDTO postDTO, String email) {
                 Post post = postRepository.findById(id)
                                 .orElseThrow(() -> new RuntimeException("Post not found"));
 
-                User author = userRepository.findByUsername(username)
+                User author = userRepository.findByEmail(email)
                                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
                 // Check if the user is the author or an admin
@@ -89,15 +91,16 @@ public class PostService {
                 post.setTitle(postDTO.getTitle());
                 post.setContent(postDTO.getContent());
                 post.setThumbnailUrl(postDTO.getThumbnailUrl());
+                post.setIsFeatured(postDTO.getIsFeatured() != null ? postDTO.getIsFeatured() : false);
 
                 return postRepository.save(post);
         }
 
-        public void deletePost(Long id, String username) {
+        public void deletePost(Long id, String email) {
                 Post post = postRepository.findById(id)
                                 .orElseThrow(() -> new RuntimeException("Post not found"));
 
-                User author = userRepository.findByUsername(username)
+                User author = userRepository.findByEmail(email)
                                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
                 // Check if the user is the author or an admin
