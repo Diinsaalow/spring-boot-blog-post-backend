@@ -47,10 +47,10 @@ public class PostController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<PostDTO> updatePost(@PathVariable Long id, @Valid @RequestBody PostDTO postDTO,
+    public ResponseEntity<PostDTO> updatePost(@PathVariable Long id, @RequestBody PostUpdateDTO postUpdateDTO,
             Authentication authentication) {
         String email = authentication.getName();
-        Post updatedPost = postService.updatePost(id, postDTO, email);
+        Post updatedPost = postService.updatePost(id, postUpdateDTO, email);
         return ResponseEntity.ok(postService.mapToDTO(updatedPost));
     }
 

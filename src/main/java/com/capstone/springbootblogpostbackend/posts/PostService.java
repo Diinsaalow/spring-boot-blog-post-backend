@@ -78,7 +78,7 @@ public class PostService {
                 return postRepository.save(post);
         }
 
-        public Post updatePost(Long id, PostDTO postDTO, String email) {
+        public Post updatePost(Long id, PostUpdateDTO postUpdateDTO, String email) {
                 Post post = postRepository.findById(id)
                                 .orElseThrow(() -> BlogException.notFound("Post", id));
 
@@ -91,10 +91,19 @@ public class PostService {
                         throw BlogException.forbidden("You can only update your own posts");
                 }
 
-                post.setTitle(postDTO.getTitle());
-                post.setContent(postDTO.getContent());
-                post.setThumbnailUrl(postDTO.getThumbnailUrl());
-                post.setIsFeatured(postDTO.getIsFeatured() != null ? postDTO.getIsFeatured() : false);
+                // Only update fields that are provided (not null)
+                if (postUpdateDTO.getTitle() != null) {
+                        post.setTitle(postUpdateDTO.getTitle());
+                }
+                if (postUpdateDTO.getContent() != null) {
+                        post.setContent(postUpdateDTO.getContent());
+                }
+                if (postUpdateDTO.getThumbnailUrl() != null) {
+                        post.setThumbnailUrl(postUpdateDTO.getThumbnailUrl());
+                }
+                if (postUpdateDTO.getIsFeatured() != null) {
+                        post.setIsFeatured(postUpdateDTO.getIsFeatured());
+                }
 
                 return postRepository.save(post);
         }
