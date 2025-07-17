@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import com.capstone.springbootblogpostbackend.users.UserDTO;
 
 @Data
 @NoArgsConstructor
@@ -15,7 +16,7 @@ public class CommentDTO {
     private Long id;
     private String content;
     private Long postId;
-    private Long authorId;
+    private UserDTO author;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

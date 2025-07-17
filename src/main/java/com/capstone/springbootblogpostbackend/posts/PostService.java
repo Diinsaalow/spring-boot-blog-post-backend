@@ -43,6 +43,17 @@ public class PostService {
                                                                 .postId(post.getId())
                                                                 .createdAt(comment.getCreatedAt())
                                                                 .updatedAt(comment.getUpdatedAt())
+                                                                .author(com.capstone.springbootblogpostbackend.users.UserDTO
+                                                                                .builder()
+                                                                                .id(comment.getAuthor().getId())
+                                                                                .fullName(comment.getAuthor()
+                                                                                                .getFullName())
+                                                                                .email(comment.getAuthor().getEmail())
+                                                                                .profileImageUrl(comment.getAuthor()
+                                                                                                .getProfileImageUrl())
+                                                                                .role(comment.getAuthor().getRole()
+                                                                                                .name())
+                                                                                .build())
                                                                 .build())
                                                 .collect(Collectors.toList());
 
@@ -109,16 +120,12 @@ public class PostService {
         }
 
         public void deletePost(Long id, String email) {
-                System.out.println("Deleting post with id: " + id);
                 Post post = postRepository.findById(id)
                                 .orElseThrow(() -> BlogException.notFound("Post", id));
 
                 User author = userRepository.findByEmail(email)
                                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
-                // Author id and post author id are the same
-                System.out.println("Author id: " + author.getId());
-                System.out.println("Post author id: " + post.getAuthor().getId());
                 // Check if the user is the author or an admin
                 if (!post.getAuthor().getId().equals(author.getId()) &&
                                 !author.getRole().name().equals("ADMIN")) {
@@ -126,6 +133,7 @@ public class PostService {
                 }
 
                 postRepository.delete(post);
+
         }
 
         public List<Post> getPostsByAuthor(Long authorId) {
