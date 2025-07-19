@@ -42,7 +42,10 @@ public class AuthService {
                 var jwtToken = jwtService.generateToken(userDetails);
                 return AuthResponse.builder()
                                 .token(jwtToken)
+                                .id(user.getId())
                                 .fullName(user.getFullName())
+                                .email(user.getEmail())
+                                .profileImageUrl(user.getProfileImageUrl())
                                 .role(user.getRole().name())
                                 .message("User registered successfully")
                                 .build();
@@ -63,7 +66,10 @@ public class AuthService {
                 var jwtToken = jwtService.generateToken(userDetails);
                 return AuthResponse.builder()
                                 .token(jwtToken)
+                                .id(user.getId())
                                 .fullName(user.getFullName())
+                                .email(user.getEmail())
+                                .profileImageUrl(user.getProfileImageUrl())
                                 .role(user.getRole().name())
                                 .message("Authentication successful")
                                 .build();
