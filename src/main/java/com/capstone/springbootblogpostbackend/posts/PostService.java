@@ -96,12 +96,6 @@ public class PostService {
                 User author = userRepository.findByEmail(email)
                                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
-                // Check if the user is the author or an admin
-                if (!post.getAuthor().getId().equals(author.getId()) &&
-                                !author.getRole().name().equals("ADMIN")) {
-                        throw BlogException.forbidden("You can only update your own posts");
-                }
-
                 // Only update fields that are provided (not null)
                 if (postUpdateDTO.getTitle() != null) {
                         post.setTitle(postUpdateDTO.getTitle());
@@ -126,14 +120,7 @@ public class PostService {
                 User author = userRepository.findByEmail(email)
                                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
-                // Check if the user is the author or an admin
-                if (!post.getAuthor().getId().equals(author.getId()) &&
-                                !author.getRole().name().equals("ADMIN")) {
-                        throw BlogException.forbidden("You can only delete your own posts");
-                }
-
                 postRepository.delete(post);
-
         }
 
         public List<Post> getPostsByAuthor(Long authorId) {

@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.capstone.springbootblogpostbackend.auth.CommentAccess;
 import com.capstone.springbootblogpostbackend.exception.BlogException;
 
 import jakarta.validation.Valid;
@@ -46,6 +47,7 @@ public class CommentController {
     }
 
     @PutMapping("/{id}")
+    @CommentAccess
     public ResponseEntity<CommentDTO> updateComment(@PathVariable Long id, @Valid @RequestBody CommentDTO commentDTO,
             Authentication authentication) {
         String email = authentication.getName();
@@ -54,6 +56,7 @@ public class CommentController {
     }
 
     @DeleteMapping("/{id}")
+    @CommentAccess
     public ResponseEntity<Void> deleteComment(@PathVariable Long id, Authentication authentication) {
         String email = authentication.getName();
         commentService.deleteComment(id, email);

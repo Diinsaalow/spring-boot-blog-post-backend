@@ -56,12 +56,6 @@ public class CommentService {
                 User author = userRepository.findByEmail(email)
                                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
-                // Check if the user is the author or an admin
-                if (!comment.getAuthor().getId().equals(author.getId()) &&
-                                !author.getRole().name().equals("ADMIN")) {
-                        throw BlogException.forbidden("You can only update your own comments");
-                }
-
                 comment.setContent(commentDTO.getContent());
 
                 Comment saved = commentRepository.save(comment);
@@ -75,12 +69,6 @@ public class CommentService {
                 User author = userRepository.findByEmail(email)
                                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
-                // Check if the user is the author or an admin
-                if (!comment.getAuthor().getId().equals(author.getId()) &&
-                                !author.getRole().name().equals("ADMIN")) {
-                        throw BlogException.forbidden("You can only delete your own comments");
-                }
-
                 commentRepository.delete(comment);
         }
 
@@ -88,6 +76,30 @@ public class CommentService {
                 return commentRepository.findByAuthorId(authorId).stream()
                                 .map(this::mapToDTO)
                                 .collect(Collectors.toList());
+        }
+
+        /**
+         * Check if the given user is the author of the comment
+         * This method is used by the @CommentAccess annotation for method-level security
+         */
+        public boolean isCommentAuthor(Long commentId, String userEmail) {
+                try {
+                        Comment comment = commentRepository.findById(commentId)
+                                        .orElse(null);
+                        if (comment == null) {
+                                return false;
+                        }
+                        
+                        User user = userRepository.findByEmail(userEmail)
+                                        .orElse(null);
+                        if (user == null) {
+                                return false;
+                        }
+                        
+                        return comment.getAuthor().getId().equals(user.getId());
+                } catch (Exception e) {
+                        return false;
+                }
         }
 
         private CommentDTO mapToDTO(Comment comment) {

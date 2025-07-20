@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.capstone.springbootblogpostbackend.auth.AdminOnly;
 import com.capstone.springbootblogpostbackend.exception.BlogException;
 
 import jakarta.validation.Valid;
@@ -38,6 +39,7 @@ public class PostController {
     }
 
     @PostMapping
+    @AdminOnly
     public ResponseEntity<PostDTO> createPost(@Valid @RequestBody PostDTO postDTO, Authentication authentication) {
         String email = authentication.getName();
         Post createdPost = postService.createPost(postDTO, email);
@@ -45,6 +47,7 @@ public class PostController {
     }
 
     @PutMapping("/{id}")
+    @AdminOnly
     public ResponseEntity<PostDTO> updatePost(@PathVariable Long id, @RequestBody PostUpdateDTO postUpdateDTO,
             Authentication authentication) {
         String email = authentication.getName();
@@ -53,6 +56,7 @@ public class PostController {
     }
 
     @DeleteMapping("/{id}")
+    @AdminOnly
     public ResponseEntity<Void> deletePost(@PathVariable Long id, Authentication authentication) {
         String email = authentication.getName();
         postService.deletePost(id, email);
