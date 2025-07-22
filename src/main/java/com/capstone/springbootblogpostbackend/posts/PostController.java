@@ -12,12 +12,13 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.capstone.springbootblogpostbackend.auth.AdminOnly;
 import com.capstone.springbootblogpostbackend.exception.BlogException;
 
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -38,20 +39,57 @@ public class PostController {
         return ResponseEntity.ok(postService.mapToDTO(post));
     }
 
-    @PostMapping
+        @PostMapping(consumes = "multipart/form-data")
     @AdminOnly
-    public ResponseEntity<PostDTO> createPost(@Valid @RequestBody PostDTO postDTO, Authentication authentication) {
+    public ResponseEntity<PostDTO> createPost(
+            @RequestPart("title") String title,
+            @RequestPart("content") String content,
+            @RequestPart("thumbnailImage") MultipartFile thumbnailImage,
+            @RequestPart(value = "isFeatured", required = false) String isFeatured,
+            Authentication authentication) {
         String email = authentication.getName();
-        Post createdPost = postService.createPost(postDTO, email);
+        
+        // Validate required fields
+        if (title == null || title.trim().isEmpty()) {
+            throw BlogException.badRequest("Title is required");
+        }
+        if (content == null || content.trim().isEmpty()) {
+            throw BlogException.badRequest("Content is required");
+        }
+        if (thumbnailImage == null || thumbnailImage.isEmpty()) {
+            throw BlogException.badRequest("Thumbnail image is required");
+        }
+        
+        PostCreateRequest postCreateRequest = PostCreateRequest.builder()
+                .title(title)
+                .content(content)
+                .thumbnailImage(thumbnailImage)
+                .isFeatured(isFeatured != null ? Boolean.parseBoolean(isFeatured) : false)
+                .build();
+        
+        Post createdPost = postService.createPost(postCreateRequest, email);
         return ResponseEntity.ok(postService.mapToDTO(createdPost));
     }
 
-    @PutMapping("/{id}")
+    @PutMapping(value = "/{id}", consumes = "multipart/form-data")
     @AdminOnly
-    public ResponseEntity<PostDTO> updatePost(@PathVariable Long id, @RequestBody PostUpdateDTO postUpdateDTO,
+    public ResponseEntity<PostDTO> updatePost(
+            @PathVariable Long id,
+            @RequestPart(value = "title", required = false) String title,
+            @RequestPart(value = "content", required = false) String content,
+            @RequestPart(value = "thumbnailImage", required = false) MultipartFile thumbnailImage,
+            @RequestPart(value = "isFeatured", required = false) String isFeatured,
             Authentication authentication) {
         String email = authentication.getName();
-        Post updatedPost = postService.updatePost(id, postUpdateDTO, email);
+
+        PostUpdateRequest postUpdateRequest = PostUpdateRequest.builder()
+                .title(title)
+                .content(content)
+                .thumbnailImage(thumbnailImage)
+                .isFeatured(isFeatured != null ? Boolean.parseBoolean(isFeatured) : null)
+                .build();
+
+        Post updatedPost = postService.updatePost(id, postUpdateRequest, email);
         return ResponseEntity.ok(postService.mapToDTO(updatedPost));
     }
 

@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import com.capstone.springbootblogpostbackend.comments.CommentDTO;
 import com.capstone.springbootblogpostbackend.exception.BlogException;
+import com.capstone.springbootblogpostbackend.service.CloudinaryService;
 import com.capstone.springbootblogpostbackend.users.User;
 import com.capstone.springbootblogpostbackend.users.UserDTO;
 import com.capstone.springbootblogpostbackend.users.UserRepository;
@@ -20,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 public class PostService {
         private final PostRepository postRepository;
         private final UserRepository userRepository;
+        private final CloudinaryService cloudinaryService;
 
         public List<PostDTO> getAllPosts() {
                 return postRepository.findAll().stream()
@@ -32,6 +34,7 @@ public class PostService {
                                 .id(post.getAuthor().getId())
                                 .fullName(post.getAuthor().getFullName())
                                 .email(post.getAuthor().getEmail())
+                                .profileImageUrl(post.getAuthor().getProfileImageUrl())
                                 .role(post.getAuthor().getRole().name()) // Convert Role enum to String
                                 .build();
 
@@ -74,22 +77,29 @@ public class PostService {
                 return postRepository.findById(id);
         }
 
-        public Post createPost(PostDTO postDTO, String email) {
+        public Post createPost(PostCreateRequest postCreateRequest, String email) {
                 User author = userRepository.findByEmail(email)
                                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
+                // Upload thumbnail image to Cloudinary
+                String thumbnailUrl = cloudinaryService.uploadImage(
+                                postCreateRequest.getThumbnailImage(),
+                                "blog-post-thumbnails");
+
                 Post post = Post.builder()
-                                .title(postDTO.getTitle())
-                                .content(postDTO.getContent())
-                                .thumbnailUrl(postDTO.getThumbnailUrl())
-                                .isFeatured(postDTO.getIsFeatured() != null ? postDTO.getIsFeatured() : false)
+                                .title(postCreateRequest.getTitle())
+                                .content(postCreateRequest.getContent())
+                                .thumbnailUrl(thumbnailUrl)
+                                .isFeatured(postCreateRequest.getIsFeatured() != null
+                                                ? postCreateRequest.getIsFeatured()
+                                                : false)
                                 .author(author)
                                 .build();
 
                 return postRepository.save(post);
         }
 
-        public Post updatePost(Long id, PostUpdateDTO postUpdateDTO, String email) {
+        public Post updatePost(Long id, PostUpdateRequest postUpdateRequest, String email) {
                 Post post = postRepository.findById(id)
                                 .orElseThrow(() -> BlogException.notFound("Post", id));
 
@@ -97,17 +107,21 @@ public class PostService {
                                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
                 // Only update fields that are provided (not null)
-                if (postUpdateDTO.getTitle() != null) {
-                        post.setTitle(postUpdateDTO.getTitle());
+                if (postUpdateRequest.getTitle() != null) {
+                        post.setTitle(postUpdateRequest.getTitle());
                 }
-                if (postUpdateDTO.getContent() != null) {
-                        post.setContent(postUpdateDTO.getContent());
+                if (postUpdateRequest.getContent() != null) {
+                        post.setContent(postUpdateRequest.getContent());
                 }
-                if (postUpdateDTO.getThumbnailUrl() != null) {
-                        post.setThumbnailUrl(postUpdateDTO.getThumbnailUrl());
+                if (postUpdateRequest.getThumbnailImage() != null) {
+                        // Upload new thumbnail image to Cloudinary
+                        String newThumbnailUrl = cloudinaryService.uploadImage(
+                                        postUpdateRequest.getThumbnailImage(),
+                                        "blog-post-thumbnails");
+                        post.setThumbnailUrl(newThumbnailUrl);
                 }
-                if (postUpdateDTO.getIsFeatured() != null) {
-                        post.setIsFeatured(postUpdateDTO.getIsFeatured());
+                if (postUpdateRequest.getIsFeatured() != null) {
+                        post.setIsFeatured(postUpdateRequest.getIsFeatured());
                 }
 
                 return postRepository.save(post);

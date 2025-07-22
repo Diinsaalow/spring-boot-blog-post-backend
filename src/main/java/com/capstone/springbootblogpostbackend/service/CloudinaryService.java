@@ -27,7 +27,6 @@ public class CloudinaryService {
             Map<?, ?> result = cloudinary.uploader().upload(file.getBytes(), options);
             String secureUrl = (String) result.get("secure_url");
             
-            log.info("Image uploaded successfully to Cloudinary: {}", secureUrl);
             return secureUrl;
             
         } catch (IOException e) {
@@ -39,7 +38,6 @@ public class CloudinaryService {
     public void deleteImage(String publicId) {
         try {
             cloudinary.uploader().destroy(publicId, ObjectUtils.emptyMap());
-            log.info("Image deleted successfully from Cloudinary: {}", publicId);
         } catch (IOException e) {
             log.error("Error deleting image from Cloudinary", e);
             throw new RuntimeException("Failed to delete image", e);
