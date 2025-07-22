@@ -1,17 +1,17 @@
 package com.capstone.springbootblogpostbackend.posts;
 
-import com.capstone.springbootblogpostbackend.users.UserDTO;
+import java.time.LocalDateTime;
+import java.util.List;
+
 import com.capstone.springbootblogpostbackend.comments.CommentDTO;
+import com.capstone.springbootblogpostbackend.users.UserDTO;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDateTime;
-import java.util.List;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
 
 @Data
 @NoArgsConstructor
